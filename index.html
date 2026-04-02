@@ -3,131 +3,98 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sneha ❤️</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&display=swap" rel="stylesheet">
+<title>Sneha 💖</title>
 
 <style>
 body {
   margin: 0;
-  font-family: 'Poppins', sans-serif;
+  font-family: Arial;
+  text-align: center;
   background: linear-gradient(135deg, #ff758c, #ff7eb3);
   color: white;
-  overflow-x: hidden;
 }
 
-/* Glass Card */
+/* Center box */
 .container {
-  backdrop-filter: blur(15px);
-  background: rgba(255,255,255,0.1);
-  border-radius: 20px;
-  padding: 40px;
-  max-width: 400px;
-  margin: 100px auto;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-  text-align: center;
-  animation: fadeIn 1.5s ease;
+  margin-top: 100px;
 }
 
-h1 {
-  font-size: 2.5em;
-}
-
-p {
-  font-size: 1.2em;
-  opacity: 0.9;
-}
-
-/* Button */
+/* Buttons */
 button {
-  margin-top: 20px;
   padding: 12px 25px;
+  margin: 10px;
+  font-size: 18px;
   border: none;
-  border-radius: 30px;
+  border-radius: 25px;
+  cursor: pointer;
+}
+
+.yes {
   background: white;
   color: #ff4b6e;
-  font-weight: bold;
-  cursor: pointer;
-  transition: 0.3s;
 }
 
-button:hover {
-  transform: scale(1.1);
-  background: #ff4b6e;
+.no {
+  background: black;
   color: white;
+  position: absolute;
 }
 
-/* Hidden Message */
-#hiddenMsg {
-  margin-top: 20px;
+/* Hidden */
+.hidden {
   display: none;
-  font-size: 1.3em;
-}
-
-/* Floating Hearts */
-.heart {
-  position: fixed;
-  color: rgba(255,255,255,0.7);
-  animation: floatUp 6s linear infinite;
-}
-
-@keyframes floatUp {
-  0% { transform: translateY(100vh); opacity: 1; }
-  100% { transform: translateY(-10vh); opacity: 0; }
-}
-
-/* Fade animation */
-@keyframes fadeIn {
-  from {opacity: 0; transform: translateY(20px);}
-  to {opacity: 1; transform: translateY(0);}
 }
 </style>
 </head>
 
 <body>
 
-<div class="container">
+<!-- PASSWORD SCREEN -->
+<div id="lockScreen" class="container">
+  <h2>🔐 Enter Secret Code</h2>
+  <input type="password" id="pass" placeholder="Enter password">
+  <br><br>
+  <button onclick="checkPass()">Unlock 💖</button>
+</div>
+
+<!-- MAIN CONTENT -->
+<div id="mainContent" class="container hidden">
   <h1>Hey Sneha ❤️</h1>
-  <p id="typing"></p>
+  <p>Will you be mine forever? 💍</p>
 
-  <button onclick="showLove()">Tap Here 💖</button>
+  <button class="yes" onclick="yesClick()">YES 💖</button>
+  <button class="no" id="noBtn">NO 😜</button>
 
-  <div id="hiddenMsg">
-    Sneha, I Love You ❤️ <br>
-    Forever & Always 😘
-  </div>
+  <h2 id="result"></h2>
 </div>
 
 <script>
-/* Typing Effect */
-let text = "You are not just special... you are my happiness 💖";
-let i = 0;
-
-function typingEffect() {
-  if (i < text.length) {
-    document.getElementById("typing").innerHTML += text.charAt(i);
-    i++;
-    setTimeout(typingEffect, 40);
+/* PASSWORD CHECK */
+function checkPass() {
+  let p = document.getElementById("pass").value;
+  if(p === "sneha123") { // 👉 password change kar sakta hai
+    document.getElementById("lockScreen").style.display = "none";
+    document.getElementById("mainContent").classList.remove("hidden");
+  } else {
+    alert("Wrong password 😜");
   }
 }
-typingEffect();
 
-/* Button Action */
-function showLove() {
-  document.getElementById("hiddenMsg").style.display = "block";
+/* YES CLICK */
+function yesClick() {
+  document.getElementById("result").innerHTML =
+    "Yayyyy ❤️ Sneha said YES 💍🎉";
 }
 
-/* Floating Hearts */
-setInterval(() => {
-  let heart = document.createElement("div");
-  heart.className = "heart";
-  heart.innerHTML = "❤️";
-  heart.style.left = Math.random() * 100 + "vw";
-  heart.style.fontSize = (15 + Math.random() * 20) + "px";
-  document.body.appendChild(heart);
+/* NO BUTTON RUN AWAY */
+let noBtn = document.getElementById("noBtn");
 
-  setTimeout(() => heart.remove(), 6000);
-}, 300);
+noBtn.addEventListener("mouseover", () => {
+  let x = Math.random() * window.innerWidth;
+  let y = Math.random() * window.innerHeight;
+  noBtn.style.left = x + "px";
+  noBtn.style.top = y + "px";
+});
 </script>
 
 </body>
