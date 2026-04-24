@@ -1,101 +1,312 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sneha 💖</title>
+import { useState, useRef, useEffect } from "react";
 
-<style>
-body {
-  margin: 0;
-  font-family: Arial;
-  text-align: center;
-  background: linear-gradient(135deg, #ff758c, #ff7eb3);
-  color: white;
+const SAMPLE_VIDEOS = [
+  { id: 1, title: "Big Buck Bunny 🐰 — Animated Short Film", channel: "Blender Studio", views: "45L", time: "1 hafte pehle", duration: "9:56", thumb: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Big_buck_bunny_poster_big.jpg/320px-Big_buck_bunny_poster_big.jpg", category: "Travel", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" },
+  { id: 2, title: "Elephant Dream 🐘 — Surreal Adventure", channel: "Blender Studio", views: "2Cr", time: "3 din pehle", duration: "10:54", thumb: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/ElephantsDream.jpg", category: "Khel", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4" },
+  { id: 3, title: "Subaru Outback Car Tour 🚗", channel: "Auto Guru", views: "8L", time: "5 din pehle", duration: "2:14", thumb: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/SubaruOutbackOnStreetAndDirt.jpg", category: "Tech", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4" },
+  { id: 4, title: "For Bigger Blazes 🔥 — Epic Moments", channel: "Action Channel", views: "30L", time: "1 hafte pehle", duration: "0:15", thumb: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerBlazes.jpg", category: "Khana", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" },
+  { id: 5, title: "We Are Going On Bullrun 🏎️", channel: "Race Wale", views: "5L", time: "Aaj", duration: "0:46", thumb: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/WeAreGoingOnBullrun.jpg", category: "Health", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4" },
+  { id: 6, title: "Tears of Steel ⚔️ — Sci-Fi Short", channel: "Blender Studio", views: "90L", time: "2 din pehle", duration: "12:14", thumb: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/TearsOfSteel.jpg", category: "Music", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4" },
+  { id: 7, title: "Volkswagen GTI Review 🚙", channel: "Car Wale", views: "18L", time: "4 din pehle", duration: "0:50", thumb: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/VolkswagenGTIReview.jpg", category: "Vlog", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/VolkswagenGTIReview.mp4" },
+  { id: 8, title: "For Bigger Escapes 🌊 — Adventure", channel: "Travel Adda", views: "12L", time: "6 din pehle", duration: "0:15", thumb: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerEscapes.jpg", category: "Travel", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4" },
+];
+
+const CATEGORIES = ["Sab", "Travel", "Khana", "Khel", "Tech", "Health", "Music", "Vlog"];
+
+function VideoPlayer({ video }) {
+  const videoRef = useRef();
+  const containerRef = useRef();
+  const controlsTimer = useRef();
+  const [playing, setPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [volume, setVolume] = useState(1);
+  const [muted, setMuted] = useState(false);
+  const [showControls, setShowControls] = useState(true);
+  const [buffering, setBuffering] = useState(false);
+
+  useEffect(() => {
+    setPlaying(false); setProgress(0); setDuration(0);
+  }, [video?.id]);
+
+  const fmt = (t) => {
+    if (!t || isNaN(t)) return "0:00";
+    const m = Math.floor(t / 60), ss = Math.floor(t % 60);
+    return `${m}:${ss.toString().padStart(2, "0")}`;
+  };
+
+  const togglePlay = () => {
+    if (!videoRef.current) return;
+    if (playing) { videoRef.current.pause(); setPlaying(false); }
+    else { videoRef.current.play().catch(() => {}); setPlaying(true); }
+  };
+
+  const seek = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const t = pct * duration;
+    if (videoRef.current) { videoRef.current.currentTime = t; setProgress(t); }
+  };
+
+  const showCtrl = () => {
+    setShowControls(true);
+    clearTimeout(controlsTimer.current);
+    controlsTimer.current = setTimeout(() => { if (playing) setShowControls(false); }, 2500);
+  };
+
+  const src = video.localUrl || video.videoUrl;
+
+  return (
+    <div ref={containerRef} style={{ borderRadius: 14, overflow: "hidden", background: "#000", position: "relative", aspectRatio: "16/9" }}
+      onMouseMove={showCtrl} onMouseLeave={() => playing && setShowControls(false)}>
+      <video ref={videoRef} src={src} style={{ width: "100%", height: "100%", display: "block", objectFit: "contain" }}
+        onTimeUpdate={() => videoRef.current && setProgress(videoRef.current.currentTime)}
+        onLoadedMetadata={() => videoRef.current && setDuration(videoRef.current.duration)}
+        onEnded={() => setPlaying(false)}
+        onWaiting={() => setBuffering(true)}
+        onCanPlay={() => setBuffering(false)}
+        onClick={togglePlay}
+        playsInline
+      />
+      {/* Big play button when paused */}
+      {!playing && !buffering && (
+        <div style={px.bigPlay} onClick={togglePlay}>
+          <div style={px.playCircle}><span style={{ fontSize: 28, marginLeft: 4 }}>▶</span></div>
+        </div>
+      )}
+      {buffering && (
+        <div style={px.bigPlay}>
+          <div style={{ color: "#fff", fontSize: 14 }}>Loading...</div>
+        </div>
+      )}
+      {/* Controls */}
+      <div style={{ ...px.controls, opacity: showControls ? 1 : 0 }}>
+        {/* Progress */}
+        <div style={px.progressBar} onClick={seek}>
+          <div style={{ ...px.progressFill, width: `${duration ? (progress / duration) * 100 : 0}%` }} />
+          <div style={{ ...px.progressThumb, left: `${duration ? (progress / duration) * 100 : 0}%` }} />
+        </div>
+        <div style={px.ctrlRow}>
+          <button style={px.ctrlBtn} onClick={togglePlay}>{playing ? "⏸" : "▶"}</button>
+          <span style={px.timeText}>{fmt(progress)} / {fmt(duration)}</span>
+          <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
+            <button style={px.ctrlBtn} onClick={() => { setMuted(m => { if (videoRef.current) videoRef.current.muted = !m; return !m; })}}>
+              {muted ? "🔇" : volume > 0.5 ? "🔊" : "🔉"}
+            </button>
+            <input type="range" min="0" max="1" step="0.05" value={muted ? 0 : volume}
+              onChange={e => { const v = parseFloat(e.target.value); setVolume(v); setMuted(v===0); if (videoRef.current) videoRef.current.volume = v; }}
+              style={{ width: 60, accentColor: "#ff5050", cursor: "pointer" }} />
+            <button style={px.ctrlBtn} onClick={() => { if (!document.fullscreenElement) containerRef.current?.requestFullscreen(); else document.exitFullscreen(); }}>⛶</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
-/* Center box */
-.container {
-  margin-top: 100px;
-}
+export default function VidTube() {
+  const [page, setPage] = useState("home");
+  const [videos, setVideos] = useState(SAMPLE_VIDEOS);
+  const [activeVideo, setActiveVideo] = useState(null);
+  const [activeCat, setActiveCat] = useState("Sab");
+  const [search, setSearch] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [uploadData, setUploadData] = useState({ title: "", channel: "", category: "Tech", file: null, thumb: null, localUrl: null });
+  const [uploadDone, setUploadDone] = useState(false);
+  const [liked, setLiked] = useState({});
+  const [comment, setComment] = useState("");
+  const [comments, setComments] = useState({ 1: ["Bahut achha video! 🔥", "Maza aa gaya bhai"], 2: ["Kya scene hai yaar!"] });
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const fileRef = useRef();
+  const thumbRef = useRef();
 
-/* Buttons */
-button {
-  padding: 12px 25px;
-  margin: 10px;
-  font-size: 18px;
-  border: none;
-  border-radius: 25px;
-  cursor: pointer;
-}
+  const filtered = videos.filter(v => {
+    const matchCat = activeCat === "Sab" || v.category === activeCat;
+    const matchSearch = !searchQuery || v.title.toLowerCase().includes(searchQuery.toLowerCase()) || v.channel.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchCat && matchSearch;
+  });
 
-.yes {
-  background: white;
-  color: #ff4b6e;
-}
+  const watchVideo = (v) => { setActiveVideo(v); setPage("watch"); setSidebarOpen(false); window.scrollTo(0, 0); };
 
-.no {
-  background: black;
-  color: white;
-  position: absolute;
-}
+  const handleFileSelect = (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    setUploadData(p => ({ ...p, file: f, localUrl: URL.createObjectURL(f) }));
+  };
 
-/* Hidden */
-.hidden {
-  display: none;
-}
-</style>
-</head>
+  const handleUpload = () => {
+    if (!uploadData.title || !uploadData.channel) return;
+    const newV = {
+      id: Date.now(),
+      title: uploadData.title,
+      channel: uploadData.channel,
+      views: "0",
+      time: "Abhi",
+      duration: "0:00",
+      thumb: uploadData.thumb || `https://picsum.photos/seed/${Date.now()}/400/225`,
+      category: uploadData.category,
+      localUrl: uploadData.localUrl,
+    };
+    setVideos(prev => [newV, ...prev]);
+    setUploadDone(true);
+    setTimeout(() => { setUploadDone(false); setUploadData({ title: "", channel: "", category: "Tech", file: null, thumb: null, localUrl: null }); setPage("home"); }, 1800);
+  };
 
-<body>
+  const addComment = () => {
+    if (!comment.trim()) return;
+    setComments(prev => ({ ...prev, [activeVideo.id]: [...(prev[activeVideo.id] || []), comment] }));
+    setComment("");
+  };
 
-<!-- PASSWORD SCREEN -->
-<div id="lockScreen" class="container">
-  <h2>🔐 Enter Secret Code</h2>
-  <input type="password" id="pass" placeholder="Enter password">
-  <br><br>
-  <button onclick="checkPass()">Unlock 💖</button>
-</div>
+  return (
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Noto+Sans:wght@400;500;600&display=swap');
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: #0a0a0a; }
+        ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-thumb { background: #333; border-radius: 99px; }
+        input:focus, textarea:focus, select:focus { outline: none; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+        .vidcard:hover { transform: translateY(-4px) !important; box-shadow: 0 12px 40px rgba(0,0,0,0.6) !important; }
+        .catbtn:hover { background: rgba(255,80,80,0.2) !important; color: #ff8080 !important; }
+        .sidecard:hover { background: #1c1c1c !important; }
+      `}</style>
 
-<!-- MAIN CONTENT -->
-<div id="mainContent" class="container hidden">
-  <h1>Hey Sneha ❤️</h1>
-  <p>Will you be mine forever? 💍</p>
+      <div style={{ minHeight: "100vh", background: "#0a0a0a", color: "#eee", fontFamily: "'Noto Sans', sans-serif" }}>
+        {/* NAV */}
+        <nav style={s.nav}>
+          <div style={s.navLeft}>
+            <button style={s.menuBtn} onClick={() => setSidebarOpen(p => !p)}>☰</button>
+            <div style={s.logo} onClick={() => { setPage("home"); setSearchQuery(""); setSearch(""); }}>
+              <span style={s.logoIcon}>▶</span>
+              <span style={s.logoText}>VidTube</span>
+            </div>
+          </div>
+          <div style={s.searchWrap}>
+            <input style={s.searchInput} placeholder="Video dhundho..." value={search}
+              onChange={e => setSearch(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter") { setSearchQuery(search); setActiveCat("Sab"); setPage("home"); }}} />
+            <button style={s.searchBtn} onClick={() => { setSearchQuery(search); setActiveCat("Sab"); setPage("home"); }}>🔍</button>
+          </div>
+          <button style={s.uploadBtn} onClick={() => setPage("upload")}>+ Upload</button>
+        </nav>
 
-  <button class="yes" onclick="yesClick()">YES 💖</button>
-  <button class="no" id="noBtn">NO 😜</button>
+        {/* SIDEBAR */}
+        {sidebarOpen && (
+          <div style={s.overlay} onClick={() => setSidebarOpen(false)}>
+            <div style={s.sidebar} onClick={e => e.stopPropagation()}>
+              <p style={s.sidebarTitle}>VidTube</p>
+              {[["🏠","Home",()=>{setPage("home");setSidebarOpen(false);}],["🔥","Trending",()=>{setActiveCat("Sab");setPage("home");setSidebarOpen(false);}],["📤","Upload",()=>{setPage("upload");setSidebarOpen(false);}]].map(([ic,lb,fn])=>(
+                <button key={lb} style={s.sidebarItem} onClick={fn}>{ic} &nbsp;{lb}</button>
+              ))}
+            </div>
+          </div>
+        )}
 
-  <h2 id="result"></h2>
-</div>
+        <div style={{ paddingTop: 64 }}>
+          {/* HOME */}
+          {page === "home" && (
+            <div style={{ maxWidth: 1200, margin: "0 auto", padding: "20px 16px" }}>
+              <div style={s.catRow}>
+                {CATEGORIES.map(c => (
+                  <button key={c} className="catbtn" style={{ ...s.catBtn, ...(activeCat === c ? s.catActive : {}) }} onClick={() => setActiveCat(c)}>{c}</button>
+                ))}
+              </div>
+              {searchQuery && <p style={{ color: "#777", marginBottom: 16, fontSize: 13 }}>"{searchQuery}" — {filtered.length} results</p>}
+              {filtered.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "60px 0", color: "#666" }}>
+                  <p style={{ fontSize: 40 }}>😕</p>
+                  <p style={{ fontSize: 18, marginTop: 10 }}>Koi video nahi mila</p>
+                  <button style={{ ...s.uploadBtn, marginTop: 16, padding: "10px 24px" }} onClick={() => setPage("upload")}>Pehla Video Upload Karo</button>
+                </div>
+              ) : (
+                <div style={s.grid}>
+                  {filtered.map((v, i) => (
+                    <div key={v.id} className="vidcard" style={{ ...s.card, animationDelay: `${i*0.05}s` }} onClick={() => watchVideo(v)}>
+                      <div style={{ position: "relative", overflow: "hidden" }}>
+                        <img src={v.thumb} alt={v.title} style={s.thumb} onError={e => e.target.src=`https://picsum.photos/seed/${v.id}/400/225`} />
+                        <span style={s.durBadge}>{v.duration}</span>
+                        <div style={s.hoverPlay}>▶ Play</div>
+                      </div>
+                      <div style={s.cardInfo}>
+                        <p style={s.cardTitle}>{v.title}</p>
+                        <p style={s.cardCh}>{v.channel}</p>
+                        <p style={s.cardMeta}>{v.views} views · {v.time}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
-<script>
-/* PASSWORD CHECK */
-function checkPass() {
-  let p = document.getElementById("pass").value;
-  if(p === "sneha123") { // 👉 password change kar sakta hai
-    document.getElementById("lockScreen").style.display = "none";
-    document.getElementById("mainContent").classList.remove("hidden");
-  } else {
-    alert("Wrong password 😜");
-  }
-}
+          {/* WATCH */}
+          {page === "watch" && activeVideo && (
+            <div style={{ maxWidth: 1140, margin: "0 auto", padding: "20px 16px", display: "flex", gap: 24, flexWrap: "wrap" }}>
+              <div style={{ flex: "1 1 620px", minWidth: 0 }}>
+                <VideoPlayer video={activeVideo} />
+                <h2 style={{ fontFamily: "'Baloo 2'", fontSize: 20, fontWeight: 800, margin: "14px 0 8px" }}>{activeVideo.title}</h2>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, flexWrap: "wrap", gap: 8 }}>
+                  <span style={{ color: "#777", fontSize: 13 }}>{activeVideo.views} views · {activeVideo.time}</span>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button style={{ ...s.actBtn, color: liked[activeVideo.id] ? "#ff5050" : "#aaa", borderColor: liked[activeVideo.id] ? "#ff5050" : "#2a2a2a" }} onClick={() => setLiked(p=>({...p,[activeVideo.id]:!p[activeVideo.id]}))}>
+                      {liked[activeVideo.id] ? "❤️" : "🤍"} Like
+                    </button>
+                    <button style={s.actBtn}>🔗 Share</button>
+                  </div>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 0", borderTop: "1px solid #1a1a1a", borderBottom: "1px solid #1a1a1a", marginBottom: 20 }}>
+                  <div style={{ width: 42, height: 42, borderRadius: "50%", background: "#ff5050", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 18, color: "#fff" }}>{activeVideo.channel[0]}</div>
+                  <div><p style={{ fontWeight: 700, fontSize: 14 }}>{activeVideo.channel}</p><p style={{ color: "#777", fontSize: 12 }}>Creator</p></div>
+                  <button style={{ marginLeft: "auto", background: "#ff5050", border: "none", borderRadius: 8, color: "#fff", padding: "8px 18px", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>Subscribe</button>
+                </div>
+                {/* Comments */}
+                <div style={{ background: "#111", borderRadius: 14, padding: 16 }}>
+                  <p style={{ fontWeight: 700, marginBottom: 14, fontSize: 15 }}>💬 Comments ({(comments[activeVideo.id]||[]).length})</p>
+                  <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
+                    <input style={{ flex: 1, background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "9px 12px", color: "#fff", fontSize: 13 }}
+                      placeholder="Comment likho..." value={comment} onChange={e => setComment(e.target.value)} onKeyDown={e => e.key==="Enter" && addComment()} />
+                    <button style={{ background: "#ff5050", border: "none", borderRadius: 8, color: "#fff", padding: "9px 16px", fontWeight: 700, cursor: "pointer" }} onClick={addComment}>Post</button>
+                  </div>
+                  {(comments[activeVideo.id]||[]).map((c,i) => (
+                    <div key={i} style={{ display: "flex", gap: 10, marginBottom: 12, paddingBottom: 12, borderBottom: "1px solid #1a1a1a" }}>
+                      <div style={{ width: 30, height: 30, borderRadius: "50%", background: "#222", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>👤</div>
+                      <p style={{ fontSize: 14, color: "#ddd", lineHeight: 1.5 }}>{c}</p>
+                    </div>
+                  ))}
+                  {!(comments[activeVideo.id]||[]).length && <p style={{ color: "#555", fontSize: 13 }}>Pehla comment tum likho!</p>}
+                </div>
+              </div>
+              {/* Sidebar */}
+              <div style={{ width: 300, flexShrink: 0 }}>
+                <p style={{ fontWeight: 700, marginBottom: 12, fontSize: 12, color: "#666", textTransform: "uppercase", letterSpacing: 1 }}>Aur Videos</p>
+                {videos.filter(v => v.id !== activeVideo.id).map(v => (
+                  <div key={v.id} className="sidecard" style={{ display: "flex", gap: 10, marginBottom: 10, cursor: "pointer", padding: 8, borderRadius: 10, transition: "background 0.15s" }} onClick={() => watchVideo(v)}>
+                    <div style={{ position: "relative", flexShrink: 0 }}>
+                      <img src={v.thumb} alt="" style={{ width: 120, height: 68, objectFit: "cover", borderRadius: 6 }} onError={e => e.target.src=`https://picsum.photos/seed/${v.id}/120/68`} />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: 12, fontWeight: 600, color: "#ddd", lineHeight: 1.4, marginBottom: 3 }}>{v.title}</p>
+                      <p style={{ fontSize: 11, color: "#666" }}>{v.channel}</p>
+                      <p style={{ fontSize: 11, color: "#555" }}>{v.views} views</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
-/* YES CLICK */
-function yesClick() {
-  document.getElementById("result").innerHTML =
-    "Yayyyy ❤️ Sneha said YES 💍🎉";
-}
-
-/* NO BUTTON RUN AWAY */
-let noBtn = document.getElementById("noBtn");
-
-noBtn.addEventListener("mouseover", () => {
-  let x = Math.random() * window.innerWidth;
-  let y = Math.random() * window.innerHeight;
-  noBtn.style.left = x + "px";
-  noBtn.style.top = y + "px";
-});
-</script>
-
-</body>
-</html>
+          {/* UPLOAD */}
+          {page === "upload" && (
+            <div style={{ maxWidth: 560, margin: "0 auto", padding: "30px 16px" }}>
+              <div style={{ background: "#111", borderRadius: 20, padding: "28px 24px", border: "1px solid #1e1e1e" }}>
+                <h2 style={{ fontFamily: "'Baloo 2'", fontSize: 22, fontWeight: 800, marginBottom: 22 }}>📤 Apna Video Upload Karo</h2>
+                {uploadDone ? (
+                  <div style={{ textAlign: "center", padding: "40px 0" }}>
+                    <p style={{ fontSize: 48 }}>✅</p>
+                    <p style={{ fontSize: 20, fontWeight: 700, marginTop: 10 }}>Upload Ho Gaya!</p>
+                    <p style={{ color: "#aaa", fontSize: 13, marginTop: 6 }}>Home pe wapas ja raha hai...</p>
+                  </div>
+                ) : (
+                  <>
+                    <div style={{ b
